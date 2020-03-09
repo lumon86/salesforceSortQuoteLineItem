@@ -1,0 +1,136 @@
+({
+    loadDataTable : function(component, event) {
+        component.set('v.spinner', true);
+        component.set('v.cmpSp_data', []);
+    	this.setColumns(component, event);
+        this.getQuoteItems(component, event);  
+    },
+	setColumns : function(component, event) {
+        var actions 		= [{ 
+            					label	: 'Mover', 
+            					name	: 'move' 
+                    		}];
+        
+		component.set('v.cmpSp_columns', [
+            { label: 'Producto', fieldName: 'Name', type: 'text'},
+            { label: 'Cantidad', fieldName: 'Quantity', type: 'text'},
+            { label: 'Monto', fieldName: 'TotalPrice', type: 'text'},
+            { label: 'Monto', fieldName: 'TotalPrice', type: 'text'},
+            { label: 'Orden de producto', fieldName: 'Orden', type: 'Number', editable: true}
+        ]);
+	},
+    getQuoteItems : function(component, event) {
+        var action 		= component.get('c.getProducts');
+        var budgetId 	= component.get("v.recordId");
+        
+        action.setParams({
+            'budgetId' : budgetId
+        });
+        
+        action.setCallback(this, function(response) {
+            var state 			= response.getState();
+            var res 			= response.getReturnValue();
+            var title;
+            var message;
+            var type;
+            
+            component.set('v.spinner', false);
+            switch(state) {
+                case "SUCCESS":
+                    let request 		= response.getReturnValue();
+                    let data			= JSON.parse(request);
+                    if (data == 'No found data') {
+                        title 	="Correcto";
+                        message = "No se obtuvo ningun resultado con los indices espicificados, intente otros valores";
+                        type 	= "SUCCESS";
+                        this.messageUser(title,message,type);
+                    } else {
+                        component.set('v.cmpSp_data', data);
+                    }
+                    break;
+                case "ERROR":
+                    var errors 	= response.getError();
+                    var err 	= "";
+                    if (errors) { if(errors[0] && errors[0].message) { err = errors[0].message; } }
+                    title 	="Error";
+                    message = "No se pudieron obtener los datos del objeto de historico. error: "+err;
+                    type 	= "ERROR";
+                    this.messageUser(title,message,type);
+                    break;
+                default:
+                    title 	="Atención";
+                    message = "Se generaron problemas al cargar el componente, actualize la página nuevamente.";
+                    type 	= "WARNING";
+                    this.messageUser(title,message,type);
+                    break;
+            }
+        });
+        $A.enqueueAction(action);
+    },
+    updateQuoteItems : function(component, event, draftValues) {
+        var action 		= component.get('c.updateOlis');
+        var _dataMap 	= {};
+        var dataToSend 	= []
+        var quoteItems = component.get('v.cmpSp_data');
+
+        draftValues.forEach(function (opportunity) {
+            dataToSend.push(opportunity);
+        });
+        
+        action.setParams({
+            'dataToSend' : JSON.stringify(dataToSend)
+        });
+        
+        action.setCallback(this, function(response) {
+            var state 			= response.getState();
+            var res 			= response.getReturnValue();
+            var title;
+            var message;
+            var type;
+            
+            switch(state) {
+                case "SUCCESS":
+                    if (res == 'SUCCESS') {
+                        title 	= "Correcto";
+                        message = "No se obtuvo ningun resultado con los indices espicificados, intente otros valores";
+                        type 	= "SUCCESS";
+                        this.messageUser(title,message,type);
+                    } else {
+                        title 	="Error";
+                        message = "No se pudo hacer el ordenamiento de manera exitosa: "+err;
+                        type 	= "ERROR";
+                        this.messageUser(title,message,type);
+                    }
+                    break;
+                case "ERROR":
+                    var errors 	= response.getError();
+                    var err 	= "";
+                    if (errors) { if(errors[0] && errors[0].message) { err = errors[0].message; } }
+                    title 	="Error";
+                    message = "No se pudieron obtener los datos del objeto de historico. error: "+err;
+                    type 	= "ERROR";
+                    this.messageUser(title,message,type);
+                    break;
+                default:
+                    title 	="Atención";
+                    message = "Se generaron problemas al cargar el componente, actualize la página nuevamente.";
+                    type 	= "WARNING";
+                    this.messageUser(title,message,type);
+                    break;
+            }
+            this.loadDataTable(component, event);
+        });
+        $A.enqueueAction(action);
+    },
+    messageUser : function(title,message,type) {
+        let toastEvent = $A.get("e.force:showToast");
+		
+        toastEvent.setParams({
+            title: 		title,
+            message: 	message,
+            type: 		type
+        });
+        
+        toastEvent.fire();
+	}
+})
