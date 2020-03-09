@@ -1,0 +1,53 @@
+<aura:component controller="cmpCtrlSortProducts" implements="flexipage:availableForAllPageTypes,force:hasRecordId" access="global" >
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:attribute name="cmpSp_data" type="Object"/>
+    <aura:attribute name="cmpSp_columns" type="List"/>
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+    <aura:attribute name="draftValues" type="Object" default="[]"/>
+    <aura:attribute name="errors" type="Object" default="[]"/>
+    
+    <div style="background-color: #FFF;" class="slds-grid slds-wrap">
+        <!-- PAGE HEADER -->
+        <div class="slds-col slds-size_12-of-12">
+            <lightning:layout class="slds-page-header slds-page-header--object-home">
+                <lightning:layoutItem>
+                    <lightning:icon iconName="standard:sort" alternativeText="bo"/>
+                </lightning:layoutItem>
+                <lightning:layoutItem padding="horizontal-small">
+                    <div class="page-section page-header">
+                        <h1 class="slds-text-heading--label">Ordenar</h1>
+                        <h2 class="slds-text-heading--medium">Partidas de presupuesto</h2>
+                    </div>
+                </lightning:layoutItem>
+            </lightning:layout>
+        </div>
+
+        <div class="slds-col slds-size_12-of-12 slds-box">
+            
+            <div class="slds-col slds-size_12-of-12 slds-box" style="overfloat:scrollbar;">
+                <div style="height: 300px">
+                    <lightning:datatable
+                                         hideCheckboxColumn="true"
+                                         columns="{! v.cmpSp_columns }"
+                                         data="{! v.cmpSp_data }"
+                                         keyField="Id"
+                                         errors="{! v.errors }"
+                                         draftValues="{! v.draftValues }"
+                                         onsave="{! c.saveQuoteItems }"
+                                         />
+                </div>
+            </div>
+        </div>
+
+        <div class="slds-col slds-size_12-of-12 slds-text-align_right slds-m-around_x-small">
+            <aura:if isTrue="{!v.spinner}">    
+                <div role="status" class="slds-spinner slds-spinner_small slds-spinner_brand">
+                    <span class="slds-assistive-text">Loading</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </aura:if>
+            <button class="slds-button slds-button_neutral" onclick="{!c.refresh}">Refrescar</button>
+        </div>
+    </div>
+</aura:component>
