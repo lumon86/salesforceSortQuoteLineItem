@@ -1,0 +1,63 @@
+public class cmpCtrlSortProducts {
+    @AuraEnabled   
+    public static String getProducts(String budgetId){
+        String retVar									= '';
+        List<Map<String, String>> tmpQuoteLineItem 		= New List<Map<String, String>>();
+        
+        tmpQuoteLineItem 								= getQuoteLineItem(budgetId);
+        retVar											= Blob.valueOf(JSON.serialize(tmpQuoteLineItem)).toString();
+        return retVar;
+    }
+    
+    @AuraEnabled
+    public static String updateOlis(String dataToSend){
+        String retVar									= 'SUCCESS';
+        List<Object> result 							= (List<Object>)JSON.deserializeUntyped(dataToSend);
+        List<QuoteLineItem> quoteLineItemUp				= New List<QuoteLineItem>();
+        if(result.size() > 0){
+            for(Object obj : result) {
+                Map<String,Object> tmpMap 					= (Map<String,Object>)obj;
+                QuoteLineItem tmpQuoteLineItem 				= New QuoteLineItem();
+                
+                tmpQuoteLineItem.Id 						= String.valueOF(tmpMap.GET('Id'));
+                tmpQuoteLineItem.SortOrder					= Integer.valueOF(tmpMap.GET('Orden'));
+                quoteLineItemUp.add(tmpQuoteLineItem);
+            }
+            try{
+                update quoteLineItemUp;
+            } catch(Exception e){
+                retVar = 'Error '+e;
+            }
+        }
+        
+        return retVar;        
+    }
+    
+    public static List<Map<String, String>> getQuoteLineItem(String budgetId){
+        List<Map<String, String>> tmpList					= New List<Map<String, String>>();
+        try{
+            List<QuoteLineItem> tmpQuoteLineItem 			= [Select 
+                                                               Id, 
+                                                               Product2.Name, 
+                                                               Quantity, 
+                                                               TotalPrice,
+                                                               SortOrder
+                                                               from QuoteLineItem 
+                                                               where QuoteId =: budgetId
+                                                               order BY SortOrder];
+            for(QuoteLineItem item : tmpQuoteLineItem){
+                Map<String, String> tmpMap = New Map<String, String>();
+
+                tmpMap.put('Id', item.Id);
+                tmpMap.put('Name', item.Product2.Name);
+                tmpMap.put('Quantity', String.valueOf(item.Quantity));
+                tmpMap.put('TotalPrice', String.valueOf(item.TotalPrice));
+                tmpMap.put('Orden', String.valueOf(item.SortOrder));
+                tmpList.add(tmpMap);
+            }
+        } catch (Exception e) {
+            tmpList = null;
+        }
+        return tmpList;
+    }
+}
